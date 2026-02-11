@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+{% block title %}Quick Sale - {{ shop_name }}{% endblock %}
+{% block page_title %}Quick Sale{% endblock %}
+
+{% block content %}
+<div x-data="quickSale()" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <!-- Product Selection (2 cols) -->
+  <div class="lg:col-span-2">
+    <div class="card bg-base-200 shadow">
+      <div class="card-body">
+        <h3 class="card-title text-base mb-3">Select Products</h3>
+
+        <!-- Search -->
+        <div class="form-control mb-4">
+          <input type="text" placeholder="Search products..."
+                 class="input input-bordered input-sm"
+                 x-model="searchQuery"
+                 @input.debounce.300ms="searchProducts()">
+        </div>
+
+        <!-- Product Grid -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+          {% for product in products %}
+          <button type="button"
+                  class="btn btn-outline btn-sm h-auto py-3 flex flex-col gap-1 normal-case"
+                  @click="addToCart({ id: {{ product.id }}, name: '{{ product.name }}', price: {{ product.selling_price }}, vat_rate: {{ product.vat_rate }} })">
+            <span class="font-medium text-xs">{{ product.name }}</span>
+            <span class="text-primary text-xs">{{ "%.2f"|format(product.selling_price) }} {{ currency }}</span>
+          </button>
+          {% endfor %}
+        </div>
+
+        {% if not products %}
+        <div class="text-center py-8 text-base-content/40">
+          <p>No active products. <a href="{{ url_for('products.create') }}" class="link link-primary">Add one</a></p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Cart (1 col) -->
+  <div>
+    <div class="card bg-base-200 shadow sticky top-20">
+      <div class="card-body">
+        <h3 class="card-title text-base">Cart</h3>
+
+        <!-- Empty state -->
+        <div x-show="cart.length === 0" class="text-center py-6 text-base-content/40">
+          <p class="text-sm">Add products to start</p>
+        </div>
+
+        <!-- Cart items -->
+        <div x-show="cart.length > 0" class="space-y-2">
+          <template x-for="(item, index) in cart" :key="item.id">
+            <div class="flex items-center gap-2 p-2 bg-base-100 rounded-lg">
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium truncate" x-text="item.name"></p>
+                <p class="text-xs opacity-60" x-text="item.price.toFixed(2) + ' {{ currency }} each'"></p>
+              </div>
+              <div class="flex items-center gap-1">
+                <button class="btn btn-ghost btn-xs btn-square" @click="updateQty(index, -1)">-</button>
+                <span class="w-8 text-center text-sm font-medium" x-text="item.qty"></span>
+                <button class="btn btn-ghost btn-xs btn-square" @click="updateQty(index, 1)">+</button>
+              </div>
+              <button class="btn btn-ghost btn-xs btn-square text-error" @click="removeFromCart(index)">&#x2715;</button>
+            </div>
+          </template>
+
+          <!-- Totals -->
+          <div class="divider my-2"></div>
+          <div class="space-y-1 text-sm">
+            <div class="flex justify-between">
+              <span>Subtotal</span>
+              <span x-text="subtotal.toFixed(2) + ' {{ currency }}'"></span>
+            </div>
+            <div class="flex justify-between text-warning">
+              <span>VAT</span>
+              <span x-text="vatTotal.toFixed(2) + ' {{ currency }}'"></span>
+            </div>
+            <div class="flex justify-between font-bold text-lg">
+              <span>Total</span>
+              <span class="text-primary" x-text="grandTotal.toFixed(2) + ' {{ currency }}'"></span>
+            </div>
+          </div>
+
+          <!-- Payment method -->
+          <div class="form-control mt-3">
+            <label class="label py-1"><span class="label-text text-xs">Payment Method</span></label>
+            <select x-model="paymentMethod" class="select select-bordered select-sm">
+              <option value="cash">Cash</option>
+              <option value="card">Card</option>
+              <option value="mobile">Mobile</option>
+            </select>
+          </div>
+
+          <!-- Customer name -->
+          <div class="form-control">
+            <label class="label py-1"><span class="label-text text-xs">Customer (optional)</span></label>
+            <input type="text" x-model="customerName" class="input input-bordered input-sm"
+                   placeholder="Customer name...">
+          </div>
+
+          <!-- Checkout -->
+          <button class="btn btn-primary btn-block mt-3" @click="checkout()"
+                  :disabled="processing" :class="processing && 'loading'">
+            <span x-show="!processing">Complete Sale</span>
+            <span x-show="processing">Processing...</span>
+          </button>
+        </div>
+
+        <!-- Success message -->
+        <div x-show="saleComplete" x-transition class="alert alert-success mt-3">
+          <span>Sale recorded! <a :href="'/sales/' + lastSaleId" class="link">View receipt</a></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function quickSale() {
+  return {
+    cart: [],
+    searchQuery: '',
+    paymentMethod: 'cash',
+    customerName: '',
+    processing: false,
+    saleComplete: false,
+    lastSaleId: null,
+
+    addToCart(product) {
+      const existing = this.cart.find(item => item.id === product.id);
+      if (existing) {
+        existing.qty++;
+      } else {
+        this.cart.push({ ...product, qty: 1 });
+      }
+      this.saleComplete = false;
+    },
+
+    removeFromCart(index) {
+      this.cart.splice(index, 1);
+    },
+
+    updateQty(index, delta) {
+      this.cart[index].qty += delta;
+      if (this.cart[index].qty <= 0) {
+        this.cart.splice(index, 1);
+      }
+    },
+
+    get subtotal() {
+      return this.cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+    },
+
+    get vatTotal() {
+      return this.cart.reduce((sum, item) => sum + (item.price * item.qty * item.vat_rate / 100), 0);
+    },
+
+    get grandTotal() {
+      return this.subtotal + this.vatTotal;
+    },
+
+    async checkout() {
+      if (this.cart.length === 0 || this.processing) return;
+      this.processing = true;
+      this.saleComplete = false;
+
+      try {
+        const response = await fetch('/sales/checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            items: this.cart.map(item => ({
+              product_id: item.id,
+              quantity: item.qty,
+            })),
+            payment_method: this.paymentMethod,
+            customer_name: this.customerName,
+          }),
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          this.lastSaleId = data.sale_id;
+          this.saleComplete = true;
+          this.cart = [];
+          this.customerName = '';
+        } else {
+          alert('Error: ' + (data.error || 'Unknown error'));
+        }
+      } catch (err) {
+        alert('Error processing sale: ' + err.message);
+      } finally {
+        this.processing = false;
+      }
+    },
+
+    async searchProducts() {
+      // Could use HTMX here but Alpine handles it fine for filtering
+    }
+  }
+}
+</script>
+{% endblock %}

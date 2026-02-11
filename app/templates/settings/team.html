@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Team - {{ shop_name }}{% endblock %}
+{% block page_title %}Team Management{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto space-y-6">
+
+  <!-- Invite Code Card -->
+  <div class="card bg-base-200 shadow">
+    <div class="card-body">
+      <h3 class="card-title text-lg">Invite Code</h3>
+      <p class="text-sm opacity-70">Share this code with team members so they can join your shop during registration.</p>
+
+      <div class="flex items-center gap-3 mt-3" x-data="{ copied: false }">
+        <code class="bg-base-300 px-4 py-2 rounded-lg text-lg font-mono tracking-widest">{{ shop.invite_code }}</code>
+        <button class="btn btn-sm btn-outline"
+                @click="navigator.clipboard.writeText('{{ shop.invite_code }}'); copied = true; setTimeout(() => copied = false, 2000)"
+                x-text="copied ? 'Copied!' : 'Copy'">Copy</button>
+
+        {% if current_user.role == 'owner' %}
+        <form method="POST" action="{{ url_for('settings.regenerate_invite') }}" class="ml-auto">
+          <button type="submit" class="btn btn-sm btn-ghost text-error"
+                  onclick="return confirm('Regenerate invite code? The old code will stop working.')">
+            Regenerate
+          </button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Members Table -->
+  <div class="card bg-base-200 shadow">
+    <div class="card-body">
+      <h3 class="card-title text-lg">Members ({{ members|length }})</h3>
+
+      <div class="overflow-x-auto mt-3">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Joined</th>
+              {% if current_user.role == 'owner' %}<th></th>{% endif %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for member in members %}
+            <tr>
+              <td class="font-medium">
+                {{ member.display_name }}
+                {% if member.id == current_user.id %}
+                  <span class="badge badge-sm badge-outline ml-1">You</span>
+                {% endif %}
+              </td>
+              <td class="opacity-70">{{ member.email }}</td>
+              <td>
+                <span class="badge {{ 'badge-primary' if member.role == 'owner' else 'badge-ghost' }} badge-sm">
+                  {{ member.role }}
+                </span>
+              </td>
+              <td class="opacity-60 text-sm">{{ member.created_at.strftime('%b %d, %Y') }}</td>
+              {% if current_user.role == 'owner' %}
+              <td>
+                {% if member.id != current_user.id %}
+                <form method="POST" action="{{ url_for('settings.remove_member', id=member.id) }}">
+                  <button type="submit" class="btn btn-ghost btn-xs text-error"
+                          onclick="return confirm('Remove {{ member.display_name }} from the team?')">
+                    Remove
+                  </button>
+                </form>
+                {% endif %}
+              </td>
+              {% endif %}
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Link to Shop Settings -->
+  {% if current_user.role == 'owner' %}
+  <div class="text-center">
+    <a href="{{ url_for('settings.shop') }}" class="btn btn-outline btn-sm">Shop Settings</a>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

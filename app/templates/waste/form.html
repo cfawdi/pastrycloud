@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Log Waste - {{ shop_name }}{% endblock %}
+{% block page_title %}Log Waste{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto" x-data="{ wasteType: 'ingredient' }">
+  <div class="card bg-base-200 shadow">
+    <div class="card-body">
+      <h2 class="card-title mb-4">Log Waste Entry</h2>
+
+      <form method="POST" class="space-y-4">
+        <!-- Waste Type Toggle -->
+        <div class="form-control">
+          <label class="label"><span class="label-text">Waste Type</span></label>
+          <div class="flex gap-2">
+            <button type="button" class="btn btn-sm"
+                    :class="wasteType === 'ingredient' ? 'btn-primary' : 'btn-outline'"
+                    @click="wasteType = 'ingredient'">Ingredient</button>
+            <button type="button" class="btn btn-sm"
+                    :class="wasteType === 'product' ? 'btn-primary' : 'btn-outline'"
+                    @click="wasteType = 'product'">Product</button>
+          </div>
+          <input type="hidden" name="waste_type" :value="wasteType">
+        </div>
+
+        <!-- Ingredient Select -->
+        <div class="form-control" x-show="wasteType === 'ingredient'">
+          <label class="label"><span class="label-text">Ingredient</span></label>
+          <select name="ingredient_id" class="select select-bordered">
+            <option value="">-- Select --</option>
+            {% for ing in ingredients %}
+            <option value="{{ ing.id }}">{{ ing.name }} ({{ ing.base_unit }})</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Product Select -->
+        <div class="form-control" x-show="wasteType === 'product'">
+          <label class="label"><span class="label-text">Product</span></label>
+          <select name="product_id" class="select select-bordered">
+            <option value="">-- Select --</option>
+            {% for p in products %}
+            <option value="{{ p.id }}">{{ p.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Category -->
+        <div class="form-control">
+          <label class="label"><span class="label-text">Category *</span></label>
+          <select name="category" class="select select-bordered" required>
+            {% for cat in categories %}
+            <option value="{{ cat }}">{{ cat|replace('_', ' ')|title }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Quantity + Unit -->
+        <div class="grid grid-cols-2 gap-4">
+          <div class="form-control">
+            <label class="label"><span class="label-text">Quantity</span></label>
+            <input type="number" name="quantity" step="0.01" min="0"
+                   class="input input-bordered" placeholder="0">
+          </div>
+          <div class="form-control">
+            <label class="label"><span class="label-text">Unit</span></label>
+            <select name="unit" class="select select-bordered">
+              <option value="g">g</option>
+              <option value="kg">kg</option>
+              <option value="mL">mL</option>
+              <option value="L">L</option>
+              <option value="pcs">pcs</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Cost estimate -->
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text">Cost Estimate ({{ currency }})</span>
+            <span class="label-text-alt">Leave 0 to auto-calculate for ingredients</span>
+          </label>
+          <input type="number" name="cost_estimate" step="0.01" min="0" value="0"
+                 class="input input-bordered">
+        </div>
+
+        <!-- Notes -->
+        <div class="form-control">
+          <label class="label"><span class="label-text">Notes</span></label>
+          <textarea name="notes" class="textarea textarea-bordered" rows="2"
+                    placeholder="Reason, details..."></textarea>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex justify-end gap-3 pt-4">
+          <a href="{{ url_for('waste.index') }}" class="btn btn-ghost">Cancel</a>
+          <button type="submit" class="btn btn-primary">Log Waste</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

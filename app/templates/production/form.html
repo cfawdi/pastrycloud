@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}New Production Run - {{ shop_name }}{% endblock %}
+{% block page_title %}New Production Run{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+  <div class="card bg-base-200 shadow">
+    <div class="card-body">
+      <h2 class="card-title mb-4">Start Production Run</h2>
+
+      <form method="POST" class="space-y-4">
+        <!-- Recipe -->
+        <div class="form-control">
+          <label class="label"><span class="label-text">Recipe *</span></label>
+          <select name="recipe_id" id="recipe-select" class="select select-bordered" required
+                  onchange="updateStockCheckUrl(this)">
+            <option value="">-- Select Recipe --</option>
+            {% for recipe in recipes %}
+            <option value="{{ recipe.id }}">{{ recipe.name }} (yields {{ recipe.yield_quantity }} {{ recipe.yield_unit }})</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Quantity -->
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text">Quantity to Produce</span>
+            <span class="label-text-alt">In recipe yield units</span>
+          </label>
+          <input type="number" name="quantity_produced" id="qty-input" step="0.1" min="0.1" value="1"
+                 class="input input-bordered"
+                 oninput="checkStock()">
+        </div>
+
+        <!-- Stock Check Result (HTMX) -->
+        <div id="stock-check"></div>
+
+        <!-- Notes -->
+        <div class="form-control">
+          <label class="label"><span class="label-text">Notes</span></label>
+          <textarea name="notes" class="textarea textarea-bordered" rows="2"
+                    placeholder="Optional production notes..."></textarea>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex justify-end gap-3 pt-4">
+          <a href="{{ url_for('production.index') }}" class="btn btn-ghost">Cancel</a>
+          <button type="submit" class="btn btn-primary">Create Run (Planned)</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function updateStockCheckUrl(select) {
+  const recipeId = select.value;
+  const qty = document.getElementById('qty-input').value || 1;
+  if (recipeId) {
+    htmx.ajax('GET', `/production/check_stock/${recipeId}?qty=${qty}`, '#stock-check');
+  }
+}
+function checkStock() {
+  const recipeId = document.getElementById('recipe-select').value;
+  const qty = document.getElementById('qty-input').value || 1;
+  if (recipeId) {
+    htmx.ajax('GET', `/production/check_stock/${recipeId}?qty=${qty}`, '#stock-check');
+  }
+}
+</script>
+{% endblock %}

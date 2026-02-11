@@ -1,0 +1,64 @@
+{% extends "auth/base_auth.html" %}
+{% block title %}Register - PastryCloud{% endblock %}
+
+{% block content %}
+<div class="card w-full max-w-md bg-base-200 shadow-xl" x-data="{ mode: 'new' }">
+  <div class="card-body">
+    <div class="text-center mb-4">
+      <div class="w-12 h-12 rounded-xl bg-primary flex items-center justify-center text-primary-content font-bold text-2xl mx-auto mb-3">P</div>
+      <h2 class="text-2xl font-bold">Create your account</h2>
+      <p class="text-sm opacity-60">Start managing your pastry business</p>
+    </div>
+
+    <form method="POST" class="space-y-4">
+      <div class="form-control">
+        <label class="label"><span class="label-text">Your name</span></label>
+        <input type="text" name="display_name" placeholder="e.g. Fatima" class="input input-bordered w-full" required>
+      </div>
+
+      <div class="form-control">
+        <label class="label"><span class="label-text">Email</span></label>
+        <input type="email" name="email" placeholder="you@example.com" class="input input-bordered w-full" required>
+      </div>
+
+      <div class="form-control">
+        <label class="label"><span class="label-text">Password</span></label>
+        <input type="password" name="password" placeholder="At least 6 characters" class="input input-bordered w-full" required minlength="6">
+      </div>
+
+      <!-- Toggle: New shop vs Join -->
+      <div class="tabs tabs-boxed bg-base-300">
+        <a class="tab flex-1" :class="mode === 'new' ? 'tab-active' : ''" @click="mode = 'new'">New Shop</a>
+        <a class="tab flex-1" :class="mode === 'join' ? 'tab-active' : ''" @click="mode = 'join'">Join with Invite</a>
+      </div>
+
+      <!-- New shop fields -->
+      <div x-show="mode === 'new'" x-transition>
+        <div class="form-control">
+          <label class="label"><span class="label-text">Shop name</span></label>
+          <input type="text" name="shop_name" placeholder="e.g. Atelier Alami" class="input input-bordered w-full">
+          <label class="label"><span class="label-text-alt">Leave blank to use your name</span></label>
+        </div>
+      </div>
+
+      <!-- Join shop fields -->
+      <div x-show="mode === 'join'" x-transition>
+        <div class="form-control">
+          <label class="label"><span class="label-text">Invite code</span></label>
+          <input type="text" name="invite_code" placeholder="e.g. a1b2c3d4" class="input input-bordered w-full" maxlength="8">
+          <label class="label"><span class="label-text-alt">Get this from your shop owner</span></label>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-block">Create Account</button>
+    </form>
+
+    <div class="divider text-xs">OR</div>
+
+    <div class="text-center text-sm space-y-2">
+      <p>Already have an account? <a href="{{ url_for('auth.login') }}" class="link link-primary font-medium">Sign in</a></p>
+      <p><a href="{{ url_for('auth.landing') }}" class="link link-secondary text-xs">Back to home</a></p>
+    </div>
+  </div>
+</div>
+{% endblock %}

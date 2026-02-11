@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit' if product else 'New' }} Product - {{ shop_name }}{% endblock %}
+{% block page_title %}{{ 'Edit' if product else 'New' }} Product{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+  <div class="card bg-base-200 shadow">
+    <div class="card-body">
+      <h2 class="card-title mb-4">{{ 'Edit' if product else 'Add New' }} Product</h2>
+
+      <form method="POST" class="space-y-4">
+        <!-- Name -->
+        <div class="form-control">
+          <label class="label"><span class="label-text">Product Name *</span></label>
+          <input type="text" name="name" required
+                 value="{{ product.name if product else '' }}"
+                 class="input input-bordered" placeholder="e.g. Cornes de Gazelle">
+        </div>
+
+        <!-- Category -->
+        <div class="form-control">
+          <label class="label"><span class="label-text">Category</span></label>
+          <select name="category" class="select select-bordered">
+            <option value="">-- Select --</option>
+            {% for cat in categories %}
+            <option value="{{ cat }}" {{ 'selected' if product and product.category == cat }}>{{ cat }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Recipe Link -->
+        <div class="form-control">
+          <label class="label"><span class="label-text">Linked Recipe (optional)</span></label>
+          <select name="recipe_id" class="select select-bordered">
+            <option value="">-- None --</option>
+            {% for recipe in recipes %}
+            <option value="{{ recipe.id }}" {{ 'selected' if product and product.recipe_id == recipe.id }}>
+              {{ recipe.name }} ({{ "%.2f"|format(recipe.cost_per_unit) }} {{ currency }}/unit)
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Price + VAT -->
+        <div class="grid grid-cols-2 gap-4">
+          <div class="form-control">
+            <label class="label"><span class="label-text">Selling Price ({{ currency }}, excl. VAT) *</span></label>
+            <input type="number" name="selling_price" step="0.01" min="0" required
+                   value="{{ product.selling_price if product else '' }}"
+                   class="input input-bordered" placeholder="0.00">
+          </div>
+          <div class="form-control">
+            <label class="label"><span class="label-text">VAT Rate (%)</span></label>
+            <input type="number" name="vat_rate" step="0.1" min="0"
+                   value="{{ product.vat_rate if product else default_vat_rate }}"
+                   class="input input-bordered" placeholder="20">
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex justify-end gap-3 pt-4">
+          <a href="{{ url_for('products.index') }}" class="btn btn-ghost">Cancel</a>
+          <button type="submit" class="btn btn-primary">
+            {{ 'Update' if product else 'Add' }} Product
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

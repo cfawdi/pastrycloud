@@ -1,0 +1,41 @@
+{% for ing in ingredients %}
+<tr class="hover">
+  <td class="font-medium">{{ ing.name }}</td>
+  <td><span class="badge badge-ghost badge-sm">{{ ing.category or '-' }}</span></td>
+  <td>{{ ing.display_quantity }}</td>
+  <td>{{ ing.display_min_stock }}</td>
+  <td>{{ "%.4f"|format(ing.cost_per_base_unit) }} {{ currency }}/{{ ing.base_unit }}</td>
+  <td>{{ "%.2f"|format(ing.stock_value) }} {{ currency }}</td>
+  <td>
+    {% if ing.expiry_date %}
+      {% if ing.is_expired %}
+        <span class="text-error font-medium">{{ ing.expiry_date.strftime('%Y-%m-%d') }}</span>
+      {% elif (ing.expiry_date - today).days <= 7 %}
+        <span class="text-warning">{{ ing.expiry_date.strftime('%Y-%m-%d') }}</span>
+      {% else %}
+        <span>{{ ing.expiry_date.strftime('%Y-%m-%d') }}</span>
+      {% endif %}
+    {% else %}
+      <span class="opacity-40">-</span>
+    {% endif %}
+  </td>
+  <td>
+    {% if ing.stock_status == 'out' %}
+      <span class="badge badge-error badge-sm">Out</span>
+    {% elif ing.stock_status == 'low' %}
+      <span class="badge badge-warning badge-sm">Low</span>
+    {% else %}
+      <span class="badge badge-success badge-sm">OK</span>
+    {% endif %}
+  </td>
+  <td class="text-right">
+    <div class="flex justify-end gap-1">
+      <a href="{{ url_for('ingredients.edit', id=ing.id) }}" class="btn btn-ghost btn-xs">Edit</a>
+      <form method="POST" action="{{ url_for('ingredients.delete', id=ing.id) }}"
+            onsubmit="return confirm('Delete {{ ing.name }}?')">
+        <button type="submit" class="btn btn-ghost btn-xs text-error">Delete</button>
+      </form>
+    </div>
+  </td>
+</tr>
+{% endfor %}

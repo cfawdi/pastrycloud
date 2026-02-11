@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Waste Log - {{ shop_name }}{% endblock %}
+{% block page_title %}Waste Log{% endblock %}
+
+{% block content %}
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+  <div>
+    <h2 class="text-2xl font-bold">Waste Log</h2>
+    <p class="text-sm opacity-60">Track spoilage, expired items, and failed batches</p>
+  </div>
+  <a href="{{ url_for('waste.create') }}" class="btn btn-primary gap-2">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+    </svg>
+    Log Waste
+  </a>
+</div>
+
+<!-- Filter -->
+<div class="mb-4">
+  <div class="flex gap-2">
+    <a href="{{ url_for('waste.index') }}"
+       class="btn btn-sm {{ 'btn-primary' if not sel_category else 'btn-outline' }}">All</a>
+    {% for cat in categories %}
+    <a href="{{ url_for('waste.index', category=cat) }}"
+       class="btn btn-sm {{ 'btn-primary' if sel_category == cat else 'btn-outline' }}">
+      {{ cat|replace('_', ' ')|title }}
+    </a>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Table -->
+<div class="card bg-base-200 shadow overflow-x-auto">
+  <table class="table table-sm">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Item</th>
+        <th>Type</th>
+        <th>Category</th>
+        <th>Quantity</th>
+        <th>Cost Est.</th>
+        <th>Notes</th>
+        <th class="text-right">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for log in logs %}
+      <tr class="hover">
+        <td>{{ log.logged_at.strftime('%Y-%m-%d %H:%M') }}</td>
+        <td class="font-medium">
+          {% if log.ingredient %}
+            {{ log.ingredient.name }}
+          {% elif log.product %}
+            {{ log.product.name }}
+          {% else %}
+            -
+          {% endif %}
+        </td>
+        <td>
+          {% if log.ingredient %}
+            <span class="badge badge-outline badge-xs">Ingredient</span>
+          {% elif log.product %}
+            <span class="badge badge-outline badge-xs">Product</span>
+          {% endif %}
+        </td>
+        <td>
+          {% set cat_colors = {'expired': 'error', 'spoiled': 'warning', 'failed_batch': 'error', 'unsold': 'info', 'other': 'ghost'} %}
+          <span class="badge badge-{{ cat_colors.get(log.category, 'ghost') }} badge-sm">
+            {{ log.category|replace('_', ' ')|title }}
+          </span>
+        </td>
+        <td>{{ log.quantity }} {{ log.unit }}</td>
+        <td>{{ "%.2f"|format(log.cost_estimate) }} {{ currency }}</td>
+        <td class="max-w-[150px] truncate">{{ log.notes or '-' }}</td>
+        <td class="text-right">
+          <form method="POST" action="{{ url_for('waste.delete', id=log.id) }}"
+                onsubmit="return confirm('Delete this waste entry?')">
+            <button type="submit" class="btn btn-ghost btn-xs text-error">Delete</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if not logs %}
+  <div class="text-center py-12 text-base-content/40">
+    <p class="font-medium">No waste entries</p>
+    <p class="text-sm mt-1">Good news! (or start logging to track waste)</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

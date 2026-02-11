@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}{{ recipe.name }} - {{ shop_name }}{% endblock %}
+{% block page_title %}{{ recipe.name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+  <!-- Header -->
+  <div class="flex justify-between items-start mb-6">
+    <div>
+      <h2 class="text-2xl font-bold">{{ recipe.name }}</h2>
+      <p class="text-sm opacity-60 mt-1">{{ recipe.description or 'No description' }}</p>
+    </div>
+    <div class="flex gap-2">
+      <a href="{{ url_for('recipes.edit', id=recipe.id) }}" class="btn btn-outline btn-sm">Edit</a>
+      <a href="{{ url_for('recipes.index') }}" class="btn btn-ghost btn-sm">Back</a>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+    <div class="stat bg-base-200 rounded-box p-4">
+      <div class="stat-title text-xs">Yield</div>
+      <div class="stat-value text-lg">{{ recipe.yield_quantity }} {{ recipe.yield_unit }}</div>
+    </div>
+    <div class="stat bg-base-200 rounded-box p-4">
+      <div class="stat-title text-xs">Total Cost</div>
+      <div class="stat-value text-lg text-primary">{{ "%.2f"|format(recipe.total_cost * scale) }} {{ currency }}</div>
+    </div>
+    <div class="stat bg-base-200 rounded-box p-4">
+      <div class="stat-title text-xs">Cost/Unit</div>
+      <div class="stat-value text-lg">{{ "%.2f"|format(recipe.cost_per_unit) }} {{ currency }}</div>
+    </div>
+    <div class="stat bg-base-200 rounded-box p-4">
+      <div class="stat-title text-xs">Time</div>
+      <div class="stat-value text-lg">{{ recipe.estimated_time_minutes or '-' }} min</div>
+    </div>
+  </div>
+
+  <!-- Scale selector -->
+  <div class="flex items-center gap-3 mb-4">
+    <span class="text-sm font-medium">Scale:</span>
+    {% for s in [0.5, 1, 2, 3, 5] %}
+    <a href="{{ url_for('recipes.detail', id=recipe.id, scale=s) }}"
+       class="btn btn-sm {{ 'btn-primary' if scale == s else 'btn-outline' }}">{{ s }}x</a>
+    {% endfor %}
+  </div>
+
+  <!-- Ingredients Table -->
+  <div class="card bg-base-200 shadow">
+    <div class="card-body">
+      <h3 class="card-title text-base">Ingredients
+        {% if scale != 1 %}<span class="badge badge-secondary badge-sm">{{ scale }}x</span>{% endif %}
+      </h3>
+      <div class="overflow-x-auto">
+        <table class="table table-sm">
+          <thead>
+            <tr>
+              <th>Ingredient</th>
+              <th>Quantity</th>
+              <th>Unit</th>
+              <th class="text-right">Cost</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for ri in recipe.ingredients %}
+            <tr>
+              <td class="font-medium">{{ ri.ingredient.name }}</td>
+              <td>{{ "%.2f"|format(ri.quantity * scale) }}</td>
+              <td>{{ ri.unit }}</td>
+              <td class="text-right">{{ "%.2f"|format(ri.line_cost * scale) }} {{ currency }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+          <tfoot>
+            <tr class="font-bold">
+              <td colspan="3">Total</td>
+              <td class="text-right">{{ "%.2f"|format(recipe.total_cost * scale) }} {{ currency }}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Linked Products -->
+  {% if recipe.products %}
+  <div class="card bg-base-200 shadow mt-4">
+    <div class="card-body">
+      <h3 class="card-title text-base">Linked Products</h3>
+      <div class="flex flex-wrap gap-2">
+        {% for product in recipe.products %}
+        <div class="badge badge-outline gap-1">
+          {{ product.name }} - {{ "%.2f"|format(product.selling_price) }} {{ currency }}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,35 @@
+<!-- Top Navigation Bar -->
+<header class="bg-base-100 border-b border-base-300 px-6 py-3 flex items-center justify-between sticky top-0 z-30">
+  <div class="flex items-center gap-4">
+    <!-- Sidebar toggle -->
+    <button class="btn btn-ghost btn-sm btn-square" @click="sidebarOpen = !sidebarOpen">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+      </svg>
+    </button>
+
+    <!-- Page title -->
+    <h2 class="text-lg font-semibold">{{ page_title_text|default('') }}</h2>
+  </div>
+
+  <div class="flex items-center gap-3">
+    <!-- Low stock alert badge -->
+    {% set low_count = low_stock_count|default(0) %}
+    {% if low_count is defined and low_count > 0 %}
+    <a href="{{ url_for('ingredients.index', status='low') }}" class="btn btn-ghost btn-sm gap-1">
+      <div class="indicator">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-warning" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+        <span class="badge badge-warning badge-xs indicator-item">{{ low_count }}</span>
+      </div>
+      <span class="text-xs hidden sm:inline">Low Stock</span>
+    </a>
+    {% endif %}
+
+    <!-- Date display -->
+    <div class="text-sm opacity-60">
+      {{ now().strftime('%b %d, %Y') if now is defined else '' }}
+    </div>
+  </div>
+</header>

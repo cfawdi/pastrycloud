@@ -1,0 +1,32 @@
+{% for p in products %}
+<tr class="hover">
+  <td class="font-medium">{{ p.name }}</td>
+  <td><span class="badge badge-ghost badge-sm">{{ p.category or '-' }}</span></td>
+  <td>{{ "%.2f"|format(p.selling_price) }} {{ currency }}</td>
+  <td>{{ p.vat_rate }}%</td>
+  <td class="font-medium">{{ "%.2f"|format(p.price_with_vat) }} {{ currency }}</td>
+  <td>
+    {% if p.recipe %}
+    <a href="{{ url_for('recipes.detail', id=p.recipe_id) }}" class="link link-primary text-sm">{{ p.recipe.name }}</a>
+    {% else %}
+    <span class="opacity-40">-</span>
+    {% endif %}
+  </td>
+  <td>
+    {% if p.is_active %}
+    <span class="badge badge-success badge-sm">Active</span>
+    {% else %}
+    <span class="badge badge-ghost badge-sm">Inactive</span>
+    {% endif %}
+  </td>
+  <td class="text-right">
+    <div class="flex justify-end gap-1">
+      <a href="{{ url_for('products.edit', id=p.id) }}" class="btn btn-ghost btn-xs">Edit</a>
+      <form method="POST" action="{{ url_for('products.delete', id=p.id) }}"
+            onsubmit="return confirm('Delete {{ p.name }}?')">
+        <button type="submit" class="btn btn-ghost btn-xs text-error">Delete</button>
+      </form>
+    </div>
+  </td>
+</tr>
+{% endfor %}

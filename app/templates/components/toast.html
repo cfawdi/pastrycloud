@@ -1,0 +1,10 @@
+<!-- Toast notification macro -->
+{% macro toast(message, type="info") %}
+<div class="alert alert-{{ type }} shadow-lg animate-slide-in"
+     x-data="{ show: true }" x-show="show"
+     x-init="setTimeout(() => show = false, 4000)"
+     x-transition>
+  <span>{{ message }}</span>
+  <button class="btn btn-ghost btn-xs" @click="show = false">&#x2715;</button>
+</div>
+{% endmacro %}

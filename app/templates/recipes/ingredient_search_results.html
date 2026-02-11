@@ -1,0 +1,10 @@
+{% for ing in ingredients %}
+<div class="flex items-center justify-between p-2 hover:bg-base-300 rounded cursor-pointer"
+     @click="selectIngredient({{ ing.id }}, '{{ ing.name }}', '{{ ing.base_unit }}')">
+  <span>{{ ing.name }}</span>
+  <span class="badge badge-ghost badge-sm">{{ ing.base_unit }}</span>
+</div>
+{% endfor %}
+{% if not ingredients %}
+<div class="p-2 text-sm opacity-50">No ingredients found</div>
+{% endif %}

@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Production - {{ shop_name }}{% endblock %}
+{% block page_title %}Production{% endblock %}
+
+{% block content %}
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+  <div>
+    <h2 class="text-2xl font-bold">Production Runs</h2>
+    <p class="text-sm opacity-60">Track production batches and ingredient usage</p>
+  </div>
+  <a href="{{ url_for('production.create') }}" class="btn btn-primary gap-2">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+    </svg>
+    New Production Run
+  </a>
+</div>
+
+<!-- Table -->
+<div class="card bg-base-200 shadow overflow-x-auto">
+  <table class="table table-sm">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Recipe</th>
+        <th>Quantity</th>
+        <th>Status</th>
+        <th>Cost</th>
+        <th>Produced At</th>
+        <th>Notes</th>
+        <th class="text-right">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for run in runs %}
+      <tr class="hover">
+        <td>{{ run.id }}</td>
+        <td class="font-medium">{{ run.recipe.name }}</td>
+        <td>{{ run.quantity_produced }}</td>
+        <td>
+          {% if run.status == 'completed' %}
+          <span class="badge badge-success badge-sm">Completed</span>
+          {% else %}
+          <span class="badge badge-warning badge-sm">Planned</span>
+          {% endif %}
+        </td>
+        <td>{{ "%.2f"|format(run.cost_total) }} {{ currency }}</td>
+        <td>{{ run.produced_at.strftime('%Y-%m-%d %H:%M') if run.produced_at else '-' }}</td>
+        <td class="max-w-[150px] truncate">{{ run.notes or '-' }}</td>
+        <td class="text-right">
+          <div class="flex justify-end gap-1">
+            {% if run.status == 'planned' %}
+            <form method="POST" action="{{ url_for('production.complete', id=run.id) }}"
+                  onsubmit="return confirm('Complete this run and deduct ingredients from stock?')">
+              <button type="submit" class="btn btn-success btn-xs">Complete</button>
+            </form>
+            <form method="POST" action="{{ url_for('production.delete', id=run.id) }}"
+                  onsubmit="return confirm('Delete this planned run?')">
+              <button type="submit" class="btn btn-ghost btn-xs text-error">Delete</button>
+            </form>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if not runs %}
+  <div class="text-center py-12 text-base-content/40">
+    <p class="font-medium">No production runs yet</p>
+    <p class="text-sm mt-1">Start a production run from a recipe</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

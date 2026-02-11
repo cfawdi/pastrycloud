@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit' if ingredient else 'Add' }} Ingredient - {{ shop_name }}{% endblock %}
+{% block page_title %}{{ 'Edit' if ingredient else 'New' }} Ingredient{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+  <div class="card bg-base-200 shadow">
+    <div class="card-body">
+      <h2 class="card-title mb-4">{{ 'Edit' if ingredient else 'Add New' }} Ingredient</h2>
+
+      <form method="POST" class="space-y-4">
+        <!-- Name -->
+        <div class="form-control">
+          <label class="label"><span class="label-text">Name *</span></label>
+          <input type="text" name="name" required
+                 value="{{ ingredient.name if ingredient else '' }}"
+                 class="input input-bordered" placeholder="e.g. All-Purpose Flour">
+        </div>
+
+        <!-- Category -->
+        <div class="form-control">
+          <label class="label"><span class="label-text">Category</span></label>
+          <select name="category" class="select select-bordered">
+            <option value="">-- Select --</option>
+            {% for cat in categories %}
+            <option value="{{ cat }}" {{ 'selected' if ingredient and ingredient.category == cat }}>{{ cat }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Unit + Quantity -->
+        <div class="grid grid-cols-2 gap-4">
+          <div class="form-control">
+            <label class="label"><span class="label-text">Unit *</span></label>
+            <select name="display_unit" class="select select-bordered" id="display-unit">
+              {% set units = ['g', 'kg', 'mL', 'L', 'pcs', 'dozen'] %}
+              {% for u in units %}
+              <option value="{{ u }}"
+                {% if ingredient %}
+                  {{ 'selected' if (ingredient.base_unit == 'g' and u == 'kg') or (ingredient.base_unit == 'mL' and u == 'L') or (ingredient.base_unit == u) }}
+                {% else %}
+                  {{ 'selected' if u == 'kg' }}
+                {% endif %}>{{ u }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-control">
+            <label class="label"><span class="label-text">Quantity on Hand</span></label>
+            {% if ingredient %}
+              {% if ingredient.base_unit == 'g' %}
+                {% set display_qty = ingredient.quantity_on_hand / 1000 %}
+              {% elif ingredient.base_unit == 'mL' %}
+                {% set display_qty = ingredient.quantity_on_hand / 1000 %}
+              {% else %}
+                {% set display_qty = ingredient.quantity_on_hand %}
+              {% endif %}
+            {% else %}
+              {% set display_qty = 0 %}
+            {% endif %}
+            <input type="number" name="quantity_on_hand" step="0.01" min="0"
+                   value="{{ display_qty }}"
+                   class="input input-bordered">
+          </div>
+        </div>
+
+        <!-- Cost -->
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text">Cost per unit ({{ currency }})</span>
+            <span class="label-text-alt">Price per selected unit above</span>
+          </label>
+          {% if ingredient %}
+            {% if ingredient.base_unit == 'g' %}
+              {% set display_cost = ingredient.cost_per_base_unit * 1000 %}
+            {% elif ingredient.base_unit == 'mL' %}
+              {% set display_cost = ingredient.cost_per_base_unit * 1000 %}
+            {% else %}
+              {% set display_cost = ingredient.cost_per_base_unit %}
+            {% endif %}
+          {% else %}
+            {% set display_cost = 0 %}
+          {% endif %}
+          <input type="number" name="cost_per_unit" step="0.01" min="0"
+                 value="{{ "%.2f"|format(display_cost) }}"
+                 class="input input-bordered" placeholder="0.00">
+        </div>
+
+        <!-- Min Stock Level -->
+        <div class="form-control">
+          <label class="label"><span class="label-text">Minimum Stock Level (alert threshold)</span></label>
+          {% if ingredient %}
+            {% if ingredient.base_unit == 'g' %}
+              {% set display_min = ingredient.min_stock_level / 1000 %}
+            {% elif ingredient.base_unit == 'mL' %}
+              {% set display_min = ingredient.min_stock_level / 1000 %}
+            {% else %}
+              {% set display_min = ingredient.min_stock_level %}
+            {% endif %}
+          {% else %}
+            {% set display_min = 0 %}
+          {% endif %}
+          <input type="number" name="min_stock_level" step="0.01" min="0"
+                 value="{{ display_min }}"
+                 class="input input-bordered">
+        </div>
+
+        <!-- Expiry Date -->
+        <div class="form-control">
+          <label class="label"><span class="label-text">Expiry Date</span></label>
+          <input type="date" name="expiry_date"
+                 value="{{ ingredient.expiry_date.isoformat() if ingredient and ingredient.expiry_date else '' }}"
+                 class="input input-bordered">
+        </div>
+
+        <!-- Notes -->
+        <div class="form-control">
+          <label class="label"><span class="label-text">Notes</span></label>
+          <textarea name="notes" class="textarea textarea-bordered" rows="2"
+                    placeholder="Optional notes...">{{ ingredient.notes if ingredient else '' }}</textarea>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex justify-end gap-3 pt-4">
+          <a href="{{ url_for('ingredients.index') }}" class="btn btn-ghost">Cancel</a>
+          <button type="submit" class="btn btn-primary">
+            {{ 'Update' if ingredient else 'Add' }} Ingredient
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

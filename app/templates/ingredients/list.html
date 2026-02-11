@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}Ingredients - {{ shop_name }}{% endblock %}
+{% block page_title %}Ingredients{% endblock %}
+
+{% block content %}
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+  <div>
+    <h2 class="text-2xl font-bold">Inventory</h2>
+    <p class="text-sm opacity-60">Manage your raw materials and ingredients</p>
+  </div>
+  <a href="{{ url_for('ingredients.create') }}" class="btn btn-primary gap-2">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+    </svg>
+    Add Ingredient
+  </a>
+</div>
+
+<!-- Filters -->
+<div class="card bg-base-200 shadow mb-6">
+  <div class="card-body py-4">
+    <div class="flex flex-wrap gap-3 items-end">
+      <!-- Search -->
+      <div class="form-control flex-1 min-w-[200px]">
+        <label class="label py-1"><span class="label-text text-xs">Search</span></label>
+        <input type="text" name="search" placeholder="Search ingredients..."
+               value="{{ search }}"
+               class="input input-bordered input-sm w-full"
+               hx-get="{{ url_for('ingredients.index') }}"
+               hx-trigger="keyup changed delay:300ms"
+               hx-target="#ingredients-table-body"
+               hx-include="[name='category'], [name='status']"
+               hx-push-url="false">
+      </div>
+
+      <!-- Category filter -->
+      <div class="form-control">
+        <label class="label py-1"><span class="label-text text-xs">Category</span></label>
+        <select name="category" class="select select-bordered select-sm"
+                hx-get="{{ url_for('ingredients.index') }}"
+                hx-trigger="change"
+                hx-target="#ingredients-table-body"
+                hx-include="[name='search'], [name='status']">
+          <option value="">All Categories</option>
+          {% for cat in categories %}
+          <option value="{{ cat }}" {{ 'selected' if sel_category == cat }}>{{ cat }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Status filter -->
+      <div class="form-control">
+        <label class="label py-1"><span class="label-text text-xs">Status</span></label>
+        <select name="status" class="select select-bordered select-sm"
+                hx-get="{{ url_for('ingredients.index') }}"
+                hx-trigger="change"
+                hx-target="#ingredients-table-body"
+                hx-include="[name='search'], [name='category']">
+          <option value="">All</option>
+          <option value="ok" {{ 'selected' if sel_status == 'ok' }}>In Stock</option>
+          <option value="low" {{ 'selected' if sel_status == 'low' }}>Low Stock</option>
+          <option value="out" {{ 'selected' if sel_status == 'out' }}>Out of Stock</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Table -->
+<div class="card bg-base-200 shadow overflow-x-auto">
+  <table class="table table-sm">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Category</th>
+        <th>Stock</th>
+        <th>Min Level</th>
+        <th>Cost/Unit</th>
+        <th>Value</th>
+        <th>Expiry</th>
+        <th>Status</th>
+        <th class="text-right">Actions</th>
+      </tr>
+    </thead>
+    <tbody id="ingredients-table-body">
+      {% include 'ingredients/table_body.html' %}
+    </tbody>
+  </table>
+
+  {% if not ingredients %}
+  <div class="text-center py-12 text-base-content/40">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-3 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+    </svg>
+    <p class="font-medium">No ingredients found</p>
+    <p class="text-sm mt-1">Add your first ingredient to get started</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

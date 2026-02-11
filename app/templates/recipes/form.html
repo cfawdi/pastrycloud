@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit' if recipe else 'New' }} Recipe - {{ shop_name }}{% endblock %}
+{% block page_title %}{{ 'Edit' if recipe else 'New' }} Recipe{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto" x-data="recipeForm()">
+  <div class="card bg-base-200 shadow">
+    <div class="card-body">
+      <h2 class="card-title mb-4">{{ 'Edit' if recipe else 'Create' }} Recipe</h2>
+
+      <form method="POST" class="space-y-4" @submit="prepareSubmit($event)">
+        <!-- Name -->
+        <div class="form-control">
+          <label class="label"><span class="label-text">Recipe Name *</span></label>
+          <input type="text" name="name" required
+                 value="{{ recipe.name if recipe else '' }}"
+                 class="input input-bordered" placeholder="e.g. Cornes de Gazelle">
+        </div>
+
+        <!-- Description -->
+        <div class="form-control">
+          <label class="label"><span class="label-text">Description</span></label>
+          <textarea name="description" class="textarea textarea-bordered" rows="2"
+                    placeholder="Brief description...">{{ recipe.description if recipe else '' }}</textarea>
+        </div>
+
+        <!-- Yield + Time -->
+        <div class="grid grid-cols-3 gap-4">
+          <div class="form-control">
+            <label class="label"><span class="label-text">Yield Quantity</span></label>
+            <input type="number" name="yield_quantity" step="0.1" min="0.1"
+                   value="{{ recipe.yield_quantity if recipe else 1 }}"
+                   class="input input-bordered">
+          </div>
+          <div class="form-control">
+            <label class="label"><span class="label-text">Yield Unit</span></label>
+            <input type="text" name="yield_unit"
+                   value="{{ recipe.yield_unit if recipe else 'pcs' }}"
+                   class="input input-bordered" placeholder="pcs, batch, kg...">
+          </div>
+          <div class="form-control">
+            <label class="label"><span class="label-text">Time (min)</span></label>
+            <input type="number" name="estimated_time_minutes" min="0"
+                   value="{{ recipe.estimated_time_minutes if recipe else 0 }}"
+                   class="input input-bordered">
+          </div>
+        </div>
+
+        <!-- Ingredients Section -->
+        <div class="divider">Ingredients</div>
+
+        <template x-for="(item, index) in ingredientRows" :key="index">
+          <div class="flex gap-2 items-end">
+            <div class="form-control flex-1">
+              <label class="label py-0" x-show="index === 0"><span class="label-text text-xs">Ingredient</span></label>
+              <select :name="'ingredient_id_' + index" class="select select-bordered select-sm w-full"
+                      x-model="item.ingredient_id" @change="updateUnits(index)">
+                <option value="">-- Select --</option>
+                {% for ing in ingredients %}
+                <option value="{{ ing.id }}" data-unit="{{ ing.base_unit }}">{{ ing.name }} ({{ ing.base_unit }})</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="form-control w-24">
+              <label class="label py-0" x-show="index === 0"><span class="label-text text-xs">Qty</span></label>
+              <input type="number" :name="'ingredient_qty_' + index" step="0.01" min="0"
+                     class="input input-bordered input-sm" x-model="item.quantity" placeholder="0">
+            </div>
+            <div class="form-control w-24">
+              <label class="label py-0" x-show="index === 0"><span class="label-text text-xs">Unit</span></label>
+              <select :name="'ingredient_unit_' + index" class="select select-bordered select-sm"
+                      x-effect="$el.innerHTML = item.availableUnits.map(u => '<option value=\'' + u + '\'>' + u + '</option>').join(''); $el.value = item.unit;"
+                      @change="item.unit = $el.value">
+              </select>
+            </div>
+            <button type="button" class="btn btn-ghost btn-sm btn-square text-error" @click="removeRow(index)">
+              &#x2715;
+            </button>
+          </div>
+        </template>
+
+        <button type="button" class="btn btn-outline btn-sm gap-1" @click="addRow()">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+          </svg>
+          Add Ingredient
+        </button>
+
+        <!-- Actions -->
+        <div class="flex justify-end gap-3 pt-4">
+          <a href="{{ url_for('recipes.index') }}" class="btn btn-ghost">Cancel</a>
+          <button type="submit" class="btn btn-primary">
+            {{ 'Update' if recipe else 'Create' }} Recipe
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const allIngredients = {{ ingredients|map(attribute='id')|list|tojson }};
+const ingredientUnits = {
+  {% for ing in ingredients %}
+  {{ ing.id }}: {
+    base: {{ ing.base_unit|tojson }},
+    units: {{ (["g","kg"] if ing.base_unit == 'g' else ["mL","L"] if ing.base_unit == 'mL' else ["pcs","dozen"])|tojson }}
+  },
+  {% endfor %}
+};
+
+function recipeForm() {
+  return {
+    ingredientRows: [
+      {% if recipe and recipe.ingredients %}
+        {% for ri in recipe.ingredients %}
+        {
+          ingredient_id: "{{ ri.ingredient_id }}",
+          quantity: {{ ri.quantity }},
+          unit: "{{ ri.unit }}",
+          availableUnits: ingredientUnits[{{ ri.ingredient_id }}]?.units || ["g","kg"]
+        },
+        {% endfor %}
+      {% else %}
+        { ingredient_id: "", quantity: "", unit: "g", availableUnits: ["g","kg"] },
+      {% endif %}
+    ],
+    addRow() {
+      this.ingredientRows.push({ ingredient_id: "", quantity: "", unit: "g", availableUnits: ["g","kg"] });
+    },
+    removeRow(index) {
+      if (this.ingredientRows.length > 1) {
+        this.ingredientRows.splice(index, 1);
+      }
+    },
+    updateUnits(index) {
+      const id = parseInt(this.ingredientRows[index].ingredient_id);
+      const info = ingredientUnits[id];
+      if (info) {
+        this.ingredientRows[index].availableUnits = info.units;
+        this.ingredientRows[index].unit = info.units[0];
+      }
+    },
+    prepareSubmit(e) {
+      // form submits naturally
+    }
+  }
+}
+</script>
+{% endblock %}

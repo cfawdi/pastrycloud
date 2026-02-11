@@ -1,0 +1,35 @@
+{% extends "auth/base_auth.html" %}
+{% block title %}Login - PastryCloud{% endblock %}
+
+{% block content %}
+<div class="card w-full max-w-md bg-base-200 shadow-xl">
+  <div class="card-body">
+    <div class="text-center mb-4">
+      <div class="w-12 h-12 rounded-xl bg-primary flex items-center justify-center text-primary-content font-bold text-2xl mx-auto mb-3">P</div>
+      <h2 class="text-2xl font-bold">Welcome back</h2>
+      <p class="text-sm opacity-60">Sign in to your PastryCloud account</p>
+    </div>
+
+    <form method="POST" class="space-y-4">
+      <div class="form-control">
+        <label class="label"><span class="label-text">Email</span></label>
+        <input type="email" name="email" placeholder="you@example.com" class="input input-bordered w-full" required>
+      </div>
+
+      <div class="form-control">
+        <label class="label"><span class="label-text">Password</span></label>
+        <input type="password" name="password" placeholder="Enter your password" class="input input-bordered w-full" required>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+    </form>
+
+    <div class="divider text-xs">OR</div>
+
+    <div class="text-center text-sm space-y-2">
+      <p>Don't have an account? <a href="{{ url_for('auth.register') }}" class="link link-primary font-medium">Create one</a></p>
+      <p><a href="{{ url_for('auth.landing') }}" class="link link-secondary text-xs">Back to home</a></p>
+    </div>
+  </div>
+</div>
+{% endblock %}

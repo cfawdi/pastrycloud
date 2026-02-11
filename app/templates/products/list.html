@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Products - {{ shop_name }}{% endblock %}
+{% block page_title %}Products{% endblock %}
+
+{% block content %}
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+  <div>
+    <h2 class="text-2xl font-bold">Products</h2>
+    <p class="text-sm opacity-60">Finished goods for sale</p>
+  </div>
+  <a href="{{ url_for('products.create') }}" class="btn btn-primary gap-2">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+    </svg>
+    Add Product
+  </a>
+</div>
+
+<!-- Search -->
+<div class="mb-4">
+  <input type="text" placeholder="Search products..."
+         value="{{ search }}"
+         class="input input-bordered input-sm w-full max-w-xs"
+         hx-get="{{ url_for('products.index', partial='1') }}"
+         hx-trigger="keyup changed delay:300ms"
+         hx-target="#products-table-body"
+         name="search">
+</div>
+
+<!-- Table -->
+<div class="card bg-base-200 shadow overflow-x-auto">
+  <table class="table table-sm">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Category</th>
+        <th>Price (excl. VAT)</th>
+        <th>VAT</th>
+        <th>Price (incl. VAT)</th>
+        <th>Recipe</th>
+        <th>Status</th>
+        <th class="text-right">Actions</th>
+      </tr>
+    </thead>
+    <tbody id="products-table-body">
+      {% include 'products/table_body.html' %}
+    </tbody>
+  </table>
+
+  {% if not products %}
+  <div class="text-center py-12 text-base-content/40">
+    <p class="font-medium">No products yet</p>
+    <p class="text-sm mt-1">Create your first product to start selling</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

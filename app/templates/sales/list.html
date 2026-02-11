@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}Sales - {{ shop_name }}{% endblock %}
+{% block page_title %}Sales{% endblock %}
+
+{% block content %}
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+  <div>
+    <h2 class="text-2xl font-bold">Sales History</h2>
+    <p class="text-sm opacity-60">Track all transactions</p>
+  </div>
+  <a href="{{ url_for('sales.quick_sale') }}" class="btn btn-primary gap-2">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"/>
+    </svg>
+    Quick Sale
+  </a>
+</div>
+
+<!-- Daily Summary -->
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+  <div class="stat bg-base-200 rounded-box shadow">
+    <div class="stat-title">Today's Revenue</div>
+    <div class="stat-value text-success text-xl">{{ "%.2f"|format(daily_total) }} {{ currency }}</div>
+  </div>
+  <div class="stat bg-base-200 rounded-box shadow">
+    <div class="stat-title">Today's VAT</div>
+    <div class="stat-value text-xl">{{ "%.2f"|format(daily_vat) }} {{ currency }}</div>
+  </div>
+  <div class="stat bg-base-200 rounded-box shadow">
+    <div class="stat-title">Transactions Today</div>
+    <div class="stat-value text-xl">{{ daily_count }}</div>
+  </div>
+</div>
+
+<!-- Filter by date -->
+<div class="mb-4">
+  <form class="flex items-end gap-2">
+    <div class="form-control">
+      <label class="label py-1"><span class="label-text text-xs">Filter by date</span></label>
+      <input type="date" name="date" value="{{ filter_date }}"
+             class="input input-bordered input-sm">
+    </div>
+    <button type="submit" class="btn btn-sm btn-outline">Filter</button>
+    {% if filter_date %}
+    <a href="{{ url_for('sales.index') }}" class="btn btn-sm btn-ghost">Clear</a>
+    {% endif %}
+  </form>
+</div>
+
+<!-- Sales Table -->
+<div class="card bg-base-200 shadow overflow-x-auto">
+  <table class="table table-sm">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Date</th>
+        <th>Items</th>
+        <th>Subtotal</th>
+        <th>VAT</th>
+        <th>Total</th>
+        <th>Payment</th>
+        <th>Customer</th>
+        <th class="text-right">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for sale in sales %}
+      <tr class="hover">
+        <td>{{ sale.id }}</td>
+        <td>{{ sale.sale_date.strftime('%Y-%m-%d') }}</td>
+        <td>{{ sale.items|length }} item{{ 's' if sale.items|length != 1 }}</td>
+        <td>{{ "%.2f"|format(sale.total_amount - sale.vat_amount) }} {{ currency }}</td>
+        <td>{{ "%.2f"|format(sale.vat_amount) }} {{ currency }}</td>
+        <td class="font-medium">{{ "%.2f"|format(sale.total_amount) }} {{ currency }}</td>
+        <td>
+          <span class="badge badge-ghost badge-sm">{{ sale.payment_method }}</span>
+        </td>
+        <td>{{ sale.customer_name or '-' }}</td>
+        <td class="text-right">
+          <div class="flex justify-end gap-1">
+            <a href="{{ url_for('sales.detail', id=sale.id) }}" class="btn btn-ghost btn-xs">View</a>
+            <form method="POST" action="{{ url_for('sales.delete', id=sale.id) }}"
+                  onsubmit="return confirm('Delete sale #{{ sale.id }}?')">
+              <button type="submit" class="btn btn-ghost btn-xs text-error">Delete</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if not sales %}
+  <div class="text-center py-12 text-base-content/40">
+    <p class="font-medium">No sales recorded</p>
+    <p class="text-sm mt-1">Use Quick Sale to record your first transaction</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

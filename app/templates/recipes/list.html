@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Recipes - {{ shop_name }}{% endblock %}
+{% block page_title %}Recipes{% endblock %}
+
+{% block content %}
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+  <div>
+    <h2 class="text-2xl font-bold">Recipes</h2>
+    <p class="text-sm opacity-60">Manage your pastry recipes and formulations</p>
+  </div>
+  <a href="{{ url_for('recipes.create') }}" class="btn btn-primary gap-2">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+    </svg>
+    New Recipe
+  </a>
+</div>
+
+<!-- Search -->
+<div class="mb-4">
+  <input type="text" placeholder="Search recipes..."
+         value="{{ search }}"
+         class="input input-bordered input-sm w-full max-w-xs"
+         hx-get="{{ url_for('recipes.index', partial='1') }}"
+         hx-trigger="keyup changed delay:300ms"
+         hx-target="#recipes-grid"
+         name="search">
+</div>
+
+<!-- Recipes Grid -->
+<div id="recipes-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+  {% for recipe in recipes %}
+  <div class="card bg-base-200 shadow hover:shadow-lg transition-shadow">
+    <div class="card-body">
+      <h3 class="card-title text-base">
+        {{ recipe.name }}
+        {% if not recipe.is_active %}
+        <span class="badge badge-ghost badge-sm">Inactive</span>
+        {% endif %}
+      </h3>
+      <p class="text-sm opacity-70 line-clamp-2">{{ recipe.description or 'No description' }}</p>
+
+      <div class="flex flex-wrap gap-2 mt-2">
+        <div class="badge badge-outline badge-sm">{{ recipe.yield_quantity }} {{ recipe.yield_unit }}</div>
+        {% if recipe.estimated_time_minutes %}
+        <div class="badge badge-outline badge-sm">{{ recipe.estimated_time_minutes }} min</div>
+        {% endif %}
+        <div class="badge badge-primary badge-sm">{{ "%.2f"|format(recipe.total_cost) }} {{ currency }}</div>
+      </div>
+
+      <div class="text-xs opacity-50 mt-1">{{ recipe.ingredients|length }} ingredient{{ 's' if recipe.ingredients|length != 1 }}</div>
+
+      <div class="card-actions justify-end mt-3">
+        <a href="{{ url_for('recipes.detail', id=recipe.id) }}" class="btn btn-ghost btn-xs">View</a>
+        <a href="{{ url_for('recipes.edit', id=recipe.id) }}" class="btn btn-ghost btn-xs">Edit</a>
+        <form method="POST" action="{{ url_for('recipes.delete', id=recipe.id) }}"
+              onsubmit="return confirm('Delete {{ recipe.name }}?')">
+          <button type="submit" class="btn btn-ghost btn-xs text-error">Delete</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% if not recipes %}
+<div class="text-center py-16 text-base-content/40">
+  <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-3 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+  </svg>
+  <p class="font-medium">No recipes yet</p>
+  <p class="text-sm mt-1">Create your first recipe to get started</p>
+</div>
+{% endif %}
+{% endblock %}

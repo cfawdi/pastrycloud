@@ -1,0 +1,29 @@
+{% for recipe in recipes %}
+<div class="card bg-base-200 shadow hover:shadow-lg transition-shadow">
+  <div class="card-body">
+    <h3 class="card-title text-base">
+      {{ recipe.name }}
+      {% if not recipe.is_active %}
+      <span class="badge badge-ghost badge-sm">Inactive</span>
+      {% endif %}
+    </h3>
+    <p class="text-sm opacity-70 line-clamp-2">{{ recipe.description or 'No description' }}</p>
+    <div class="flex flex-wrap gap-2 mt-2">
+      <div class="badge badge-outline badge-sm">{{ recipe.yield_quantity }} {{ recipe.yield_unit }}</div>
+      {% if recipe.estimated_time_minutes %}
+      <div class="badge badge-outline badge-sm">{{ recipe.estimated_time_minutes }} min</div>
+      {% endif %}
+      <div class="badge badge-primary badge-sm">{{ "%.2f"|format(recipe.total_cost) }} {{ currency }}</div>
+    </div>
+    <div class="text-xs opacity-50 mt-1">{{ recipe.ingredients|length }} ingredient{{ 's' if recipe.ingredients|length != 1 }}</div>
+    <div class="card-actions justify-end mt-3">
+      <a href="{{ url_for('recipes.detail', id=recipe.id) }}" class="btn btn-ghost btn-xs">View</a>
+      <a href="{{ url_for('recipes.edit', id=recipe.id) }}" class="btn btn-ghost btn-xs">Edit</a>
+      <form method="POST" action="{{ url_for('recipes.delete', id=recipe.id) }}"
+            onsubmit="return confirm('Delete {{ recipe.name }}?')">
+        <button type="submit" class="btn btn-ghost btn-xs text-error">Delete</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endfor %}
