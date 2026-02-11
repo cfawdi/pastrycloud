@@ -3,7 +3,7 @@ services:
     name: pastrycloud
     runtime: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:application
+    startCommand: gunicorn wsgi:application
     plan: free
     envVars:
       - key: DATABASE_URL
