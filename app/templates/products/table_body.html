@@ -6,12 +6,17 @@
   <td>{{ p.vat_rate }}%</td>
   <td class="font-medium">{{ "%.2f"|format(p.price_with_vat) }} {{ currency }}</td>
   <td>
-    {% if p.recipe %}
-    <a href="{{ url_for('recipes.detail', id=p.recipe_id) }}" class="link link-primary text-sm">{{ p.recipe.name }}</a>
+    {% if p.product_recipes %}
+    <div class="flex flex-col gap-0.5">
+      {% for pr in p.product_recipes %}
+      <a href="{{ url_for('recipes.detail', id=pr.recipe_id) }}" class="link link-primary text-sm">{{ pr.recipe.name }}{% if pr.quantity_needed != 1 %} (x{{ pr.quantity_needed }}){% endif %}</a>
+      {% endfor %}
+    </div>
     {% else %}
     <span class="opacity-40">-</span>
     {% endif %}
   </td>
+  <td class="font-medium">{{ "%.2f"|format(p.total_recipe_cost) }} {{ currency }}</td>
   <td>
     {% if p.is_active %}
     <span class="badge badge-success badge-sm">Active</span>

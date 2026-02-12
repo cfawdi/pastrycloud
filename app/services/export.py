@@ -18,7 +18,7 @@ EXPORTABLE = {
     },
     "products": {
         "model": Product,
-        "columns": ["id", "name", "category", "recipe_id", "selling_price", "vat_rate", "is_active"],
+        "columns": ["id", "name", "category", "selling_price", "vat_rate", "is_active"],
     },
     "production_runs": {
         "model": ProductionRun,

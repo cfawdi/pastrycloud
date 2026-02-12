@@ -104,7 +104,7 @@ class Recipe(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     ingredients = db.relationship("RecipeIngredient", back_populates="recipe", cascade="all, delete-orphan")
-    products = db.relationship("Product", back_populates="recipe")
+    product_recipes = db.relationship("ProductRecipe", back_populates="recipe")
     production_runs = db.relationship("ProductionRun", back_populates="recipe")
 
     @property
@@ -150,19 +150,40 @@ class Product(db.Model):
     shop_id = db.Column(db.Integer, db.ForeignKey("shops.id"), nullable=False)
     name = db.Column(db.String(100), nullable=False)
     category = db.Column(db.String(50), default="")
-    recipe_id = db.Column(db.Integer, db.ForeignKey("recipes.id"), nullable=True)
     selling_price = db.Column(db.Float, nullable=False, default=0.0)
     vat_rate = db.Column(db.Float, default=20.0)
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    recipe = db.relationship("Recipe", back_populates="products")
+    product_recipes = db.relationship("ProductRecipe", back_populates="product", cascade="all, delete-orphan")
     sale_items = db.relationship("SaleItem", back_populates="product")
     waste_logs = db.relationship("WasteLog", back_populates="product")
 
     @property
     def price_with_vat(self):
         return self.selling_price * (1 + self.vat_rate / 100)
+
+    @property
+    def total_recipe_cost(self):
+        return sum(pr.recipe.cost_per_unit * pr.quantity_needed for pr in self.product_recipes)
+
+    @property
+    def profit_margin(self):
+        if self.selling_price > 0:
+            return ((self.selling_price - self.total_recipe_cost) / self.selling_price) * 100
+        return 0.0
+
+
+class ProductRecipe(db.Model):
+    __tablename__ = "product_recipes"
+
+    id = db.Column(db.Integer, primary_key=True)
+    product_id = db.Column(db.Integer, db.ForeignKey("products.id"), nullable=False)
+    recipe_id = db.Column(db.Integer, db.ForeignKey("recipes.id"), nullable=False)
+    quantity_needed = db.Column(db.Float, default=1.0)
+
+    product = db.relationship("Product", back_populates="product_recipes")
+    recipe = db.relationship("Recipe", back_populates="product_recipes")
 
 
 class ProductionRun(db.Model):

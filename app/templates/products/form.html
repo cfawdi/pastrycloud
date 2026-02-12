@@ -3,7 +3,7 @@
 {% block page_title %}{{ 'Edit' if product else 'New' }} Product{% endblock %}
 
 {% block content %}
-<div class="max-w-2xl mx-auto">
+<div class="max-w-2xl mx-auto" x-data="productForm()">
   <div class="card bg-base-200 shadow">
     <div class="card-body">
       <h2 class="card-title mb-4">{{ 'Edit' if product else 'Add New' }} Product</h2>
@@ -28,18 +28,37 @@
           </select>
         </div>
 
-        <!-- Recipe Link -->
-        <div class="form-control">
-          <label class="label"><span class="label-text">Linked Recipe (optional)</span></label>
-          <select name="recipe_id" class="select select-bordered">
-            <option value="">-- None --</option>
-            {% for recipe in recipes %}
-            <option value="{{ recipe.id }}" {{ 'selected' if product and product.recipe_id == recipe.id }}>
-              {{ recipe.name }} ({{ "%.2f"|format(recipe.cost_per_unit) }} {{ currency }}/unit)
-            </option>
-            {% endfor %}
-          </select>
-        </div>
+        <!-- Linked Recipes -->
+        <div class="divider">Linked Recipes</div>
+
+        <template x-for="(row, index) in recipeRows" :key="index">
+          <div class="flex gap-2 items-end">
+            <div class="form-control flex-1">
+              <label class="label py-0" x-show="index === 0"><span class="label-text text-xs">Recipe</span></label>
+              <select name="recipe_ids" class="select select-bordered select-sm w-full" x-model="row.recipe_id">
+                <option value="">-- Select --</option>
+                {% for recipe in recipes %}
+                <option value="{{ recipe.id }}">{{ recipe.name }} ({{ "%.2f"|format(recipe.cost_per_unit) }} {{ currency }}/unit)</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="form-control w-24">
+              <label class="label py-0" x-show="index === 0"><span class="label-text text-xs">Qty</span></label>
+              <input type="number" name="recipe_qtys" step="0.01" min="0"
+                     class="input input-bordered input-sm" x-model="row.quantity" placeholder="1">
+            </div>
+            <button type="button" class="btn btn-ghost btn-sm btn-square text-error" @click="removeRow(index)">
+              &#x2715;
+            </button>
+          </div>
+        </template>
+
+        <button type="button" class="btn btn-outline btn-sm gap-1" @click="addRow()">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+          </svg>
+          Add Recipe
+        </button>
 
         <!-- Price + VAT -->
         <div class="grid grid-cols-2 gap-4">
@@ -68,4 +87,30 @@
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function productForm() {
+  return {
+    recipeRows: [
+      {% if product and product.product_recipes %}
+        {% for pr in product.product_recipes %}
+        { recipe_id: "{{ pr.recipe_id }}", quantity: {{ pr.quantity_needed }} },
+        {% endfor %}
+      {% else %}
+        { recipe_id: "", quantity: 1 },
+      {% endif %}
+    ],
+    addRow() {
+      this.recipeRows.push({ recipe_id: "", quantity: 1 });
+    },
+    removeRow(index) {
+      if (this.recipeRows.length > 1) {
+        this.recipeRows.splice(index, 1);
+      }
+    }
+  }
+}
+</script>
 {% endblock %}

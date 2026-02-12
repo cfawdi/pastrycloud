@@ -83,14 +83,14 @@
   </div>
 
   <!-- Linked Products -->
-  {% if recipe.products %}
+  {% if recipe.product_recipes %}
   <div class="card bg-base-200 shadow mt-4">
     <div class="card-body">
       <h3 class="card-title text-base">Linked Products</h3>
       <div class="flex flex-wrap gap-2">
-        {% for product in recipe.products %}
+        {% for pr in recipe.product_recipes %}
         <div class="badge badge-outline gap-1">
-          {{ product.name }} - {{ "%.2f"|format(product.selling_price) }} {{ currency }}
+          {{ pr.product.name }} - {{ "%.2f"|format(pr.product.selling_price) }} {{ currency }}
         </div>
         {% endfor %}
       </div>

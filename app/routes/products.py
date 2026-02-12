@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 from app.extensions import db
-from app.models import Product, Recipe
+from app.models import Product, ProductRecipe, Recipe
 from app.utils import get_or_404
 
 bp = Blueprint("products", __name__, url_prefix="/products")
@@ -30,16 +30,27 @@ def index():
 @login_required
 def create():
     if request.method == "POST":
-        recipe_id = request.form.get("recipe_id", "").strip()
         product = Product(
             shop_id=current_user.shop_id,
             name=request.form["name"].strip(),
             category=request.form.get("category", ""),
-            recipe_id=int(recipe_id) if recipe_id else None,
             selling_price=float(request.form.get("selling_price", 0)),
             vat_rate=float(request.form.get("vat_rate", 20)),
         )
         db.session.add(product)
+        db.session.flush()
+
+        recipe_ids = request.form.getlist("recipe_ids")
+        recipe_qtys = request.form.getlist("recipe_qtys")
+        for i, rid in enumerate(recipe_ids):
+            if rid:
+                qty = float(recipe_qtys[i]) if i < len(recipe_qtys) and recipe_qtys[i] else 1.0
+                db.session.add(ProductRecipe(
+                    product_id=product.id,
+                    recipe_id=int(rid),
+                    quantity_needed=qty,
+                ))
+
         db.session.commit()
         flash(f"Product '{product.name}' created!", "success")
         return redirect(url_for("products.index"))
@@ -55,12 +66,23 @@ def edit(id):
     product = get_or_404(Product, id)
 
     if request.method == "POST":
-        recipe_id = request.form.get("recipe_id", "").strip()
         product.name = request.form["name"].strip()
         product.category = request.form.get("category", "")
-        product.recipe_id = int(recipe_id) if recipe_id else None
         product.selling_price = float(request.form.get("selling_price", 0))
         product.vat_rate = float(request.form.get("vat_rate", 20))
+
+        # Replace all linked recipes
+        ProductRecipe.query.filter_by(product_id=product.id).delete()
+        recipe_ids = request.form.getlist("recipe_ids")
+        recipe_qtys = request.form.getlist("recipe_qtys")
+        for i, rid in enumerate(recipe_ids):
+            if rid:
+                qty = float(recipe_qtys[i]) if i < len(recipe_qtys) and recipe_qtys[i] else 1.0
+                db.session.add(ProductRecipe(
+                    product_id=product.id,
+                    recipe_id=int(rid),
+                    quantity_needed=qty,
+                ))
 
         db.session.commit()
         flash(f"Product '{product.name}' updated!", "success")
